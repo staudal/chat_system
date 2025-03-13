@@ -96,6 +96,7 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 5. Generate a new application key with `php artisan key:generate`
 6. Run `php artisan migrate` to create the SQLite database
 7. To start the application with WebSockets support, run:
+
    ```
    ./server.sh
    ```
