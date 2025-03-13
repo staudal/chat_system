@@ -1,66 +1,106 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Secure Chat System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel-based secure chat application implementing end-to-end encryption for private communications.
 
-## About Laravel
+## Encryption System Overview
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+This chat application implements true end-to-end encryption (E2E) where only the communicating parties can read the messages. The server never has access to unencrypted private keys or message content.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Key Encryption Technologies
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- RSA-2048 for asymmetric encryption and key exchange
+- AES-256-CBC for symmetric encryption via Defuse/Crypto
+- Password-based encryption for private key protection
+- Hybrid encryption approach for handling large payloads
 
-## Learning Laravel
+### How the Encryption Works
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+#### 1. User Registration & Key Generation
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+When a user registers:
+- A 2048-bit RSA key pair is generated
+- The private key is encrypted with the user's password using Defuse/Crypto
+- The public key and encrypted private key are stored in the database
+- The server never has access to the unencrypted private key
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+#### 2. Chat Creation & Key Exchange
 
-## Laravel Sponsors
+When two users start a chat:
+- A random symmetric key is generated for the chat
+- This chat key is encrypted twice - once with each user's public RSA key
+- Each encrypted version of the chat key is stored in the database
+- Only the respective user can decrypt their version using their password-protected private key
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+#### 3. Message Encryption
 
-### Premium Partners
+When sending messages:
+- The chat's symmetric key is used to encrypt the message content
+- The message is stored encrypted in the database
+- Neither the server nor unauthorized users can decrypt the message
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+#### 4. Message Decryption
 
-## Contributing
+When reading messages:
+- The user provides their password to decrypt their private key (if not cached in session)
+- The private key decrypts the chat key
+- The chat key decrypts the messages
+- For user convenience, the chat key is temporarily cached in the session
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Security Features
 
-## Code of Conduct
+- **True E2E Encryption**: The server never has access to unencrypted private keys or messages
+- **Password Protection**: Private keys are encrypted with the user's password
+- **Hybrid Encryption**: RSA+AES is used for handling data of any size
+- **Key Derivation**: Cryptographic salts are used for secure key derivation
+- **Session Caching**: Temporary session storage of decrypted chat keys improves usability
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Technical Implementation
 
-## Security Vulnerabilities
+The encryption system is primarily implemented in:
+- `CryptoService.php`: Core cryptographic operations
+- `ChatService.php`: Chat management with encryption
+- `UserKeyPair.php`: Model for managing user key pairs
+- `Chat.php`: Model for encrypted chat sessions
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Real-time Communication
+
+The chat system uses WebSockets for real-time message delivery:
+- Laravel Reverb broadcaster for WebSocket server
+- Laravel Echo for client-side WebSocket connections
+- Laravel's event broadcasting system for real-time message updates
+- End-to-end encryption maintained through secure WebSocket channels
+
+## Security Considerations
+
+- The security of the system relies on users choosing strong passwords
+- Session caching improves usability but introduces a security tradeoff
+- The system does not currently implement key rotation or forward secrecy
+
+## Requirements
+
+- PHP 8.1+
+- Laravel 10.x+
+- OpenSSL PHP extension
+- Defuse/Crypto library
 
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## How to run the project
+
+1. Clone the repository
+2. Run `composer install` to install dependencies
+3. Create a new `.env` file by copying `.env.example`
+4. Generate a new application key with `php artisan key:generate`
+5. Set up a new database and configure the `.env` file
+6. Run `php artisan migrate` to create the database schema
+7. To start the application with WebSockets support, run:
+   ```
+   ./server.sh
+   ```
+   This script starts both the Laravel web server and the Reverb WebSocket server
+
+Alternatively, you can start the servers manually:
+- Web server: `php artisan serve`
+- WebSocket server: `php artisan reverb:start`
