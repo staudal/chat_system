@@ -90,17 +90,18 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 ## How to run the project
 
 1. Clone the repository
-2. Run `composer install` to install dependencies
-3. Create a new `.env` file by copying `.env.example`
-4. Generate a new application key with `php artisan key:generate`
-5. Set up a new database and configure the `.env` file
-6. Run `php artisan migrate` to create the database schema
+2. Run `cp .env.example .env` to copy env variables
+3. Run `composer install` to install backend dependencies
+4. Run `npm install && npm run build`to install dependencies and build
+5. Generate a new application key with `php artisan key:generate`
+6. Run `php artisan migrate` to create the SQLite database
 7. To start the application with WebSockets support, run:
    ```
    ./server.sh
    ```
-   This script starts both the Laravel web server and the Reverb WebSocket server
+   This script starts both the Laravel web server, the Reverb WebSocket server, and the queue worker to process pending jobs.
 
 Alternatively, you can start the servers manually:
 - Web server: `php artisan serve`
 - WebSocket server: `php artisan reverb:start`
+- Queue worker: `php artisan queue:work`
