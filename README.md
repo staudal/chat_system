@@ -106,3 +106,6 @@ Alternatively, you can start the servers manually:
 - Web server: `php artisan serve`
 - WebSocket server: `php artisan reverb:start`
 - Queue worker: `php artisan queue:work`
+
+## Screenshots
+Screenshots can be found in the screenshots/ folder.
